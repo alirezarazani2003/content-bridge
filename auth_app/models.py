@@ -2,15 +2,12 @@ from django.db import models
 from django.utils import timezone
 import random
 
-# Create your models here.
-
-
 class EmailOTP(models.Model):
     email = models.EmailField()
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(default=timezone.now)
     is_used = models.BooleanField(default=False)
-    name = models.CharField(max_length=200)
+
     def is_expired(self):
         return timezone.now() > self.created_at + timezone.timedelta(minutes=5)
 
