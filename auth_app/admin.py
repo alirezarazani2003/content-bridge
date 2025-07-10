@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth import get_user_model
-from . models import EmailOTP , OTPPurpose
+from . models import EmailOTP
 # Register your models here.
 
 
