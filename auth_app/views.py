@@ -346,7 +346,6 @@ class LogoutView(APIView):
     )
     def post(self, request: Any) -> Response:
         refresh_token = request.COOKIES.get('refresh')
-        print("refresh_token:", refresh_token) 
         if not refresh_token:
             return Response({'msg': 'توکن یافت نشد'}, status=status.HTTP_400_BAD_REQUEST)
 
