@@ -1,11 +1,12 @@
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions,status
 from .models import Channel
 from .serializers import ChannelSerializer
 from auth_app.permissions import IsEmailVerified
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
-
-
+from .services import verify_telegram_channel
+from rest_framework.response import Response
+from django.utils.translation import gettext_lazy as _
 class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         return obj.user == request.user
@@ -17,27 +18,41 @@ class ChannelCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
 
     @swagger_auto_schema(
-        operation_summary="ثبت کانال جدید",
-        operation_description="کاربر با ایمیل وریفای‌شده می‌تواند کانال تلگرام یا بله خود را ثبت کند. شناسه باید با @ شروع شود.",
+        operation_summary="ثبت کانال جدید (در صورت موفقیت در وریفای)",
+        operation_description="اگر ربات دسترسی به کانال داشته باشد، کانال ذخیره می‌شود. در غیر این صورت پیام خطا برمی‌گردد.",
         responses={
             201: openapi.Response("کانال با موفقیت ثبت شد"),
-            400: openapi.Response("خطای اعتبارسنجی یا داده‌های نامعتبر"),
-            403: openapi.Response("کاربر وریفای‌نشده یا احراز هویت‌نشده"),
+            400: openapi.Response("خطای اعتبارسنجی یا عدم دسترسی ربات به کانال"),
+            403: openapi.Response("دسترسی غیرمجاز یا ایمیل وریفای نشده"),
         }
     )
     def post(self, request, *args, **kwargs):
-        return super().post(request, *args, **kwargs)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-    def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        platform = serializer.validated_data['platform']
+        username = serializer.validated_data['username']
+
+        if platform == 'telegram':
+            is_ok, reason = verify_telegram_channel(username)
+        elif platform == 'bale':
+            is_ok, reason = verify_bale_channel(username)
+        else:
+            return Response({"detail": _("پلتفرم نامعتبر است.")}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not is_ok:
+            return Response({"detail": _("عدم توانایی در تأیید کانال"), "reason": reason}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer.save(user=request.user, is_verified=True)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class ChannelListView(generics.ListAPIView):
     serializer_class = ChannelSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     @swagger_auto_schema(
-        operation_summary="لیست کانال‌های کاربر",
-        operation_description="نمایش لیست کانال‌هایی که کاربر فعلی ثبت کرده است.",
+        operation_summary="لیست کانال‌های ثبت‌شده",
+        operation_description="لیست کانال‌هایی که کاربر فعلی ثبت کرده را نمایش می‌دهد.",
         responses={200: ChannelSerializer(many=True)}
     )
     def get(self, request, *args, **kwargs):
