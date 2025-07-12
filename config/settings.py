@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'users',
     'auth_app',
     'corsheaders',
+    'channels',
     
 ]
 

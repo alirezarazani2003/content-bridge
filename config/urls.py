@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('auth_app.urls')),
     path('api/users/', include('users.urls')),
+    path('api/channels/', include('channels.urls')),
     path('api/dashboard/', ProtectedDashboardView.as_view(), name='dashboard'),
 ] + swagger_urls.urlpatterns
