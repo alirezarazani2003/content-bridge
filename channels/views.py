@@ -6,8 +6,7 @@ from drf_yasg import openapi
 
 from .models import Channel
 from .serializers import ChannelSerializer
-from .services import verify_channel 
-
+from .services import verify_telegram_channel
 from auth_app.permissions import IsEmailVerified
 
 
@@ -37,21 +36,27 @@ class ChannelCreateView(generics.CreateAPIView):
         platform = serializer.validated_data['platform']
         username = serializer.validated_data['username']
 
-        is_ok, result = verify_channel(platform, username)
+        if platform == 'telegram':
+            is_ok, result = verify_telegram_channel(username)
+        else:
+            return Response({"detail": _("پلتفرم نامعتبر است.")}, status=status.HTTP_400_BAD_REQUEST)
 
         if not is_ok:
             return Response(
-                {"detail": _("عدم توانایی در تأیید کانال"), "reason": result},
+                {
+                    "detail": _("عدم توانایی در تأیید کانال"),
+                    "reason": result
+                },
                 status=status.HTTP_400_BAD_REQUEST
             )
-            
         serializer.save(
             user=request.user,
             is_verified=True,
-            platform_channel_id=result
+            platform_channel_id=result["chat_id"]
         )
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 
 class ChannelListView(generics.ListAPIView):
@@ -78,58 +83,25 @@ class ChannelDetailView(generics.RetrieveUpdateDestroyAPIView):
     @swagger_auto_schema(
         operation_summary="مشاهده اطلاعات کانال",
         operation_description="نمایش جزئیات یک کانال خاص (فقط درصورتی که مالک آن باشید).",
-        responses={
-            200: ChannelSerializer(),
-            403: "دسترسی غیرمجاز یا ایمیل تایید نشده",
-            404: "کانال پیدا نشد"
-        }
+        responses={200: ChannelSerializer(), 403: "دسترسی غیرمجاز", 404: "کانال پیدا نشد"}
     )
+    def get_queryset(self):
+        return Channel.objects.filter(user=self.request.user)
     def get(self, request, *args, **kwargs):
         return super().get(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_summary="ویرایش کانال",
         operation_description="ویرایش اطلاعات یک کانال ثبت‌شده (فقط توسط مالک مجاز است).",
-        responses={
-            200: ChannelSerializer(),
-            400: "ورودی نامعتبر",
-            403: "عدم دسترسی",
-            404: "یافت نشد"
-        }
+        responses={200: ChannelSerializer(), 400: "ورودی نامعتبر", 403: "عدم دسترسی", 404: "یافت نشد"}
     )
     def put(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=False)
-        serializer.is_valid(raise_exception=True)
-
-        # بررسی تغییر username یا platform
-        new_username = serializer.validated_data.get('username')
-        new_platform = serializer.validated_data.get('platform')
-
-        # اگر یکی از این دو تغییر کرده باشد، باید وریفای کنیم
-        if (new_username != instance.username) or (new_platform != instance.platform):
-            is_ok, result = verify_channel(new_platform, new_username)
-            if not is_ok:
-                return Response(
-                    {"detail": _("عدم توانایی در تأیید کانال پس از ویرایش"), "reason": result},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            # در صورت موفقیت وریفای، مقادیر را بروز می‌کنیم
-            serializer.save(is_verified=True, failed_reason="", platform_channel_id=result)
-        else:
-            # اگر تغییری در username یا platform نبود، فقط ذخیره می‌کنیم
-            serializer.save()
-
-        return Response(serializer.data)
+        return super().put(request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_summary="حذف کانال",
         operation_description="حذف یک کانال (فقط توسط مالک مجاز است).",
-        responses={
-            204: "با موفقیت حذف شد",
-            403: "عدم دسترسی",
-            404: "یافت نشد"
-        }
+        responses={204: "با موفقیت حذف شد", 403: "عدم دسترسی", 404: "یافت نشد"}
     )
     def delete(self, request, *args, **kwargs):
         return super().delete(request, *args, **kwargs)
