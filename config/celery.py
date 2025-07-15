@@ -1,7 +1,9 @@
 # social_manager/celery.py
 import os
 from celery import Celery
-from django.conf import settings
+from utils.loging_setup import setup_logging
+
+setup_logging()
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 
 app = Celery("config")
