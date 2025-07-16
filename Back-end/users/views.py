@@ -100,5 +100,4 @@ class LoginView(APIView):
             samesite='Strict',
             max_age=config('REFRESH_TOKEN_DAYS', cast=int) * 24 * 3600
         )
-        print("Set refresh_token cookie:", refresh_token)
         return response
