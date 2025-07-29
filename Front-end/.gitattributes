@@ -1,1 +1,20 @@
-* text=auto eol=lf
+# تنظیم خودکار متن‌ها
+* text=auto
+
+# فایل‌های کد با LF (ضروری برای لینوکس)
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+
+# اسکریپت‌های شل حتماً باید LF داشته باشن
+*.sh text eol=lf
+
+# فایل‌های باینری (تصاویر و غیره) بدون تغییر
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
