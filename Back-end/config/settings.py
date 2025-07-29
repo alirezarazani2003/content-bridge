@@ -201,4 +201,4 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 
-AI_SERVICE_URL = config(AI_SERVICE_URL)
+AI_SERVICE_URL = config('AI_SERVICE_URL')

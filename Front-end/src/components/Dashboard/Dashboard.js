@@ -115,8 +115,9 @@ const Dashboard = () => {
             </span>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button 
+                style={{backgroundColor:'blue'}}
                 onClick={() => navigate('/profile')}
-                className="profile-btn"
+                className="logout-btn"
               >
                 پروفایل
               </button>

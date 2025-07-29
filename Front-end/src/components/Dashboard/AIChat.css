@@ -56,6 +56,9 @@
 
 .session-item {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   padding: 12px;
   margin-bottom: 8px;
   background-color: #f5f5f5;
@@ -63,6 +66,7 @@
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.2s ease;
+  gap: 8px;
 }
 
 .session-item:hover {
@@ -72,6 +76,14 @@
 .session-item.active {
   background-color: #e3f2fd;
   border: 1px solid #1976d2;
+}
+
+.session-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .session-title {
@@ -90,6 +102,36 @@
   font-size: 12px;
   color: #666;
   margin-top: 4px;
+  white-space: nowrap;
+}
+
+.delete-session-btn {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  opacity: 0;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.session-item:hover .delete-session-btn,
+.session-item.active .delete-session-btn {
+  opacity: 1;
+}
+
+.delete-session-btn:hover {
+  background: #d9363e;
+  transform: scale(1.1);
 }
 
 /* ناحیه اصلی چت */
@@ -123,7 +165,6 @@
   opacity: 0.9;
 }
 
-/* دکمه منو برای موبایل */
 .menu-toggle {
   background: none;
   border: none;
@@ -184,7 +225,7 @@
   padding: 12px 16px;
   border-radius: 18px;
   word-wrap: break-word;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .message-bubble.user {
@@ -210,7 +251,6 @@
 .message-content {
   font-size: 0.9rem;
   line-height: 1.4;
-
 }
 
 .message-time {
@@ -224,7 +264,6 @@
   text-align: left;
 }
 
-/* نمایش خطا */
 .error-message {
   padding: 10px 20px;
   background-color: #ffebee;
@@ -234,7 +273,6 @@
   flex-shrink: 0;
 }
 
-/* فرم ارسال پیام */
 .message-form {
   display: flex;
   padding: 15px;
@@ -303,7 +341,7 @@
 }
 
 .markdown-content code {
-  background-color: rgba(0,0,0,0.05);
+  background-color: rgba(0, 0, 0, 0.05);
   padding: 0.2rem 0.4rem;
   border-radius: 3px;
   font-family: monospace;
@@ -330,18 +368,17 @@
   text-decoration: underline;
 }
 
-/* ریسپانسیو برای موبایل */
+/* ریسپانسیو موبایل */
 @media (max-width: 768px) {
   .ai-chat-container {
     height: 100vh;
     border-radius: 0;
   }
-  
+
   .menu-toggle {
     display: block;
   }
-  
-  /* سایدبار برای موبایل - به صورت کشویی */
+
   .sessions-sidebar {
     position: fixed;
     right: 0;
@@ -351,42 +388,40 @@
     z-index: 1000;
     transform: translateX(100%);
     transition: transform 0.3s ease;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
   }
-  
+
   .sessions-sidebar.open {
     transform: translateX(0);
   }
-  
-  /* اورلی برای موبایل */
+
   .overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0,0,0,0.5);
+    background-color: rgba(0, 0, 0, 0.5);
     z-index: 999;
     display: none;
   }
-  
+
   .overlay.open {
     display: block;
   }
-  
+
   .message-bubble {
     max-width: 85%;
   }
-  
+
   .chat-header h3 {
     font-size: 1.1rem;
   }
-  
+
   .message-content {
     font-size: 0.85rem;
-
   }
-  
+
   .message-time {
     font-size: 0.65rem;
   }
@@ -397,30 +432,30 @@
     max-width: 90%;
     padding: 10px 14px;
   }
-  
+
   .message-input {
     padding: 10px 12px;
     font-size: 13px;
   }
-  
+
   .send-button {
     padding: 10px 16px;
     font-size: 13px;
     margin-right: 5px;
   }
-  
+
   .chat-header {
     padding: 12px 15px;
   }
-  
+
   .messages-container {
     padding: 15px;
   }
-  
+
   .session-title {
     font-size: 13px;
   }
-  
+
   .session-date {
     font-size: 11px;
   }
