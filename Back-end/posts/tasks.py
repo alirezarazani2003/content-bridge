@@ -1,6 +1,6 @@
 from celery import shared_task
 from .models import Post
-from channels.services import send_message_to_channel
+from channels.services import send_message_to_channel 
 from django.utils import timezone
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
@@ -67,3 +67,5 @@ def send_post_task(self, post_id):
 
     except Exception as exc:
         raise self.retry(exc=exc)
+    
+
