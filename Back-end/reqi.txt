@@ -6,3 +6,6 @@ djangorestframework-simplejwt
 python-telegram-bot
 celery
 redis
+drf_yasg
+django-cors-headers
+requests
