@@ -144,6 +144,7 @@
 
 /* === پیام خطا === */
 .error-message {
+  width: 70%;
   background-color: #fed7d7;
   border-right: 4px solid #e53e3e;
   padding: 12px;
