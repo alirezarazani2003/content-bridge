@@ -3,6 +3,10 @@ from celery import shared_task
 from .models import Post
 from channels.services import send_message_to_channel
 from django.utils import timezone
+import os
+from django.core.mail import send_mail
+from django.conf import settings
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -79,3 +83,26 @@ def send_post_task(self, post_id):
 
     except Exception as exc:
         raise self.retry(exc=exc)
+
+
+@shared_task
+def send_log_file():
+    log_path = os.path.join(settings.BASE_DIR, 'logs/project.log')
+    if not os.path.exists(log_path):
+        return "No log file found."
+
+    with open(log_path, 'r') as file:
+        log_content = file.read()
+
+    subject = f"Log Report - {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+    send_mail(
+        subject=subject,
+        message=log_content[:5000],  # ارسال حداکثر ۵۰۰۰ کاراکتر
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[settings.LOGGING_EMAIL_RECIPIENTS],
+    )
+
+    with open(log_path, 'w') as file:
+        file.truncate()
+
+    return "Log email sent."
