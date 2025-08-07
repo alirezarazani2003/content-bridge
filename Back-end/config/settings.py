@@ -16,24 +16,32 @@ from datetime import timedelta
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] [{levelname}] {name}::{message}',
+            'style': '{',
+        },
+    },
     'handlers': {
-        'console': {
+        'file': {
             'level': 'INFO',
-            'class': 'logging.StreamHandler',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs/project.log',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['console'],
+            'handlers': ['file'],
             'level': 'INFO',
             'propagate': True,
         },
     },
 }
+
 
 
 # Quick-start development settings - unsuitable for production
@@ -67,6 +75,8 @@ INSTALLED_APPS = [
     'channels',
     'posts',
     'chat',
+    'django_celery_beat',
+
 ]
 
 MIDDLEWARE = [
@@ -188,6 +198,7 @@ EMAIL_PORT = int(config("EMAIL_PORT"))
 EMAIL_USE_TLS = config("EMAIL_USE_TLS",cast=bool)
 EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
+LOGGING_EMAIL_RECIPIENTS = config("LOGGING_EMAIL_RECIPIENTS")
 
 
 CORS_ALLOW_CREDENTIALS = config('CORS_ALLOW_CREDENTIALS', default=False, cast=bool)
