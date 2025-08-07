@@ -296,9 +296,10 @@ const AddChannelForm = ({ onAdd, isLoading }) => {
       <div className="form-group" style={{ marginBottom: '10px' }}>
         <input
           type="text"
-          placeholder="شناسه کانال (مثل @channel)"
+          placeholder="@channel"
           value={formData.username}
           onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+          dir="ltr"
           required
           disabled={isLoading}
           style={{

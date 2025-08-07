@@ -13,6 +13,41 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // تشخیص کاراکتر فارسی/عربی
+  const isPersianChar = (char) => {
+    const code = char.charCodeAt(0);
+    return (code >= 1570 && code <= 1740) || code === 8204 || code === 8205;
+  };
+
+  // ولیدیشن ایمیل برای جلوگیری از ورود فارسی
+  const handleEmailKeyDown = (e) => {
+    if (isPersianChar(e.key)) {
+      e.preventDefault();
+      setMessage('لطفاً کیبورد خود را به حالت انگلیسی تغییر دهید');
+    } else if (message.includes('کیبورد')) {
+      setMessage('');
+    }
+  };
+
+  // ولیدیشن رمز عبور برای جلوگیری از فارسی
+  const handlePasswordKeyDown = (e) => {
+    if (isPersianChar(e.key)) {
+      e.preventDefault();
+      setMessage('لطفاً کیبورد خود را به حالت انگلیسی تغییر دهید');
+    } else if (message.includes('کیبورد')) {
+      setMessage('');
+    }
+  };
+
+  const handleConfirmPasswordKeyDown = (e) => {
+    if (isPersianChar(e.key)) {
+      e.preventDefault();
+      setMessage('لطفاً کیبورد خود را به حالت انگلیسی تغییر دهید');
+    } else if (message.includes('کیبورد')) {
+      setMessage('');
+    }
+  };
+
   // تابع ارزیابی قدرت رمز عبور
   const getPasswordStrength = (password) => {
     if (password === '') return { label: '', width: 0, color: '' };
@@ -34,7 +69,7 @@ const ResetPassword = () => {
     if (passedChecks === 5 && password.length >= 8) {
       strength = 100;
       label = 'بسیار قوی';
-      color = '#28a745'; // سبز تیره
+      color = '#28a745'; // سبز
     } else if (passedChecks >= 3) {
       strength = 60;
       label = 'متوسط';
@@ -78,6 +113,13 @@ const ResetPassword = () => {
       return;
     }
 
+    // جلوگیری از ورود فارسی در ایمیل
+    if (/[آ-ی]/.test(email)) {
+      setMessage('ایمیل نباید شامل کاراکتر فارسی باشد');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await api.post('/auth/request-reset-otp/', { email });
       setMessage(response.data.msg || 'کد بازیابی به ایمیل شما ارسال شد');
@@ -96,7 +138,6 @@ const ResetPassword = () => {
     setLoading(true);
     setMessage('');
 
-    // این چک فقط برای اطمینان اضافی است (هرچند دکمه غیرفعال است)
     if (strength.label !== 'بسیار قوی') {
       setMessage('رمز عبور باید بسیار قوی باشد');
       setLoading(false);
@@ -105,6 +146,13 @@ const ResetPassword = () => {
 
     if (newPassword !== confirmPassword) {
       setMessage('رمزهای عبور با هم مطابقت ندارند');
+      setLoading(false);
+      return;
+    }
+
+    // جلوگیری از ورود فارسی در رمز عبور
+    if (/[آ-ی]/.test(newPassword)) {
+      setMessage('رمز عبور نباید شامل کاراکتر فارسی باشد');
       setLoading(false);
       return;
     }
@@ -165,7 +213,7 @@ const ResetPassword = () => {
             <h3 className="form-title">بازیابی رمز عبور</h3>
 
             {message && (
-              <div className={`message ${message.includes('خطا') || message.includes('مشکل') ? 'error' : 'success'}`}>
+              <div className={`message ${message.includes('خطا') || message.includes('مشکل') || message.includes('کیبورد') ? 'error' : 'success'}`}>
                 {message}
               </div>
             )}
@@ -179,10 +227,12 @@ const ResetPassword = () => {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={handleEmailKeyDown}
                     placeholder="example@email.com"
                     required
                     disabled={loading}
                     dir="ltr"
+                    inputMode="text"
                   />
                 </div>
                 <button
@@ -217,10 +267,12 @@ const ResetPassword = () => {
                     id="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
+                    onKeyDown={handlePasswordKeyDown}
                     placeholder="رمز عبور بسیار قوی وارد کنید"
                     required
                     disabled={loading}
                     dir="ltr"
+                    inputMode="text"
                   />
 
                   {/* نوار قدرت رمز عبور */}
@@ -264,10 +316,12 @@ const ResetPassword = () => {
                     id="confirm-password"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
+                    onKeyDown={handleConfirmPasswordKeyDown}
                     placeholder="تکرار رمز عبور"
                     required
                     disabled={loading}
                     dir="ltr"
+                    inputMode="text"
                   />
                 </div>
 
