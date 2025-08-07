@@ -11,6 +11,8 @@ const ResetPassword = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
 
   // تشخیص کاراکتر فارسی/عربی
@@ -71,7 +73,7 @@ const ResetPassword = () => {
       label = 'بسیار قوی';
       color = '#28a745'; // سبز
     } else if (passedChecks >= 3) {
-      strength = 60;
+      strength = 50;
       label = 'متوسط';
       color = '#ffc107'; // زرد
     } else {
@@ -182,7 +184,6 @@ const ResetPassword = () => {
         {/* بخش ویژگی‌ها */}
         <div className="reset-password-features">
           <h2 className="reset-password-title">بازیابی رمز عبور</h2>
-
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">📱</div>
@@ -260,20 +261,31 @@ const ResetPassword = () => {
                   />
                 </div>
 
-                <div className="form-group">
+                {/* فیلد رمز عبور جدید با دکمه چشم */}
+                <div className="form-group password-group">
                   <label htmlFor="new-password">رمز عبور جدید:</label>
-                  <input
-                    type="password"
-                    id="new-password"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    onKeyDown={handlePasswordKeyDown}
-                    placeholder="رمز عبور بسیار قوی وارد کنید"
-                    required
-                    disabled={loading}
-                    dir="ltr"
-                    inputMode="text"
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showNewPassword ? 'text' : 'password'}
+                      id="new-password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      onKeyDown={handlePasswordKeyDown}
+                      placeholder="رمز عبور بسیار قوی وارد کنید"
+                      required
+                      disabled={loading}
+                      dir="ltr"
+                      inputMode="text"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowNewPassword(prev => !prev)}
+                      aria-label={showNewPassword ? 'مخفی کردن رمز عبور' : 'نمایش رمز عبور'}
+                    >
+                      {showNewPassword ? '👁️‍🗨️' : '🙈'}
+                    </button>
+                  </div>
 
                   {/* نوار قدرت رمز عبور */}
                   {newPassword && (
@@ -299,30 +311,36 @@ const ResetPassword = () => {
                   )}
                   {newPassword && strength.label === 'متوسط' && (
                     <div className="password-hint">
-                      رمز عبور متوسط است. برای قوی‌تر شدن، از کاراکترهای خاص و طول بیشتر استفاده کنید.
-                    </div>
-                  )}
-                  {newPassword && strength.label === 'قوی' && (
-                    <div className="password-hint">
-                      عالی! یک کاراکتر خاص یا طول بیشتر برای "بسیار قوی" کافی است.
+                      رمز عبور متوسط است. رمز باید حاوی کاراکتر های بزرگ و کوچک، اعداد و کاراکتر های خاص مانند @$% باشد.
                     </div>
                   )}
                 </div>
 
-                <div className="form-group">
+                {/* فیلد تکرار رمز عبور با دکمه چشم */}
+                <div className="form-group password-group">
                   <label htmlFor="confirm-password">تکرار رمز عبور:</label>
-                  <input
-                    type="password"
-                    id="confirm-password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    onKeyDown={handleConfirmPasswordKeyDown}
-                    placeholder="تکرار رمز عبور"
-                    required
-                    disabled={loading}
-                    dir="ltr"
-                    inputMode="text"
-                  />
+                  <div className="password-input-container">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirm-password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      onKeyDown={handleConfirmPasswordKeyDown}
+                      placeholder="تکرار رمز عبور"
+                      required
+                      disabled={loading}
+                      dir="ltr"
+                      inputMode="text"
+                    />
+                    <button
+                      type="button"
+                      className="password-toggle-btn"
+                      onClick={() => setShowConfirmPassword(prev => !prev)}
+                      aria-label={showConfirmPassword ? 'مخفی کردن رمز عبور' : 'نمایش رمز عبور'}
+                    >
+                      {showConfirmPassword ? '👁️‍🗨️' : '🙈'}
+                    </button>
+                  </div>
                 </div>
 
                 <button

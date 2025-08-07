@@ -27,6 +27,43 @@ const Register = () => {
     return (code >= 1570 && code <= 1740) || code === 8204 || code === 8205;
   };
 
+  // تابع ارزیابی قدرت رمز عبور
+  const getPasswordStrength = (password) => {
+    if (password === '') return { label: '', width: 0, color: '' };
+
+    const checks = {
+      length: password.length >= 8,
+      lower: /[a-z]/.test(password),
+      upper: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+
+    const passedChecks = Object.values(checks).filter(Boolean).length;
+
+    let strength = 0;
+    let label = '';
+    let color = '';
+
+    if (passedChecks === 5 && password.length >= 8) {
+      strength = 100;
+      label = 'بسیار قوی';
+      color = '#28a745'; // سبز
+    } else if (passedChecks >= 3) {
+      strength = 60;
+      label = 'متوسط';
+      color = '#ffc107'; // زرد
+    } else {
+      strength = 20;
+      label = 'ضعیف';
+      color = '#dc3545'; // قرمز
+    }
+
+    return { label, width: strength, color };
+  };
+
+  const strength = getPasswordStrength(formData.password);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -51,7 +88,6 @@ const Register = () => {
         password: 'لطفاً کیبورد خود را به حالت انگلیسی تغییر دهید'
       }));
     } else if (errors.password) {
-      // اگر کاراکتر غیرفارسی بود، خطا رو پاک کن
       setErrors(prev => ({
         ...prev,
         password: ''
@@ -131,7 +167,6 @@ const Register = () => {
       if (process.env.NODE_ENV === 'development') {
         console.error('Register error:', error);
       }
-
       if (error.response?.data) {
         const serverErrors = error.response.data;
         if (serverErrors.first_name || serverErrors.last_name || 
@@ -280,7 +315,7 @@ const Register = () => {
                 )}
               </div>
 
-              {/* فیلد رمز عبور با دکمه چشم */}
+              {/* فیلد رمز عبور با دکمه چشم و نوار قدرت */}
               <div className="form-group password-group">
                 <label htmlFor="password">رمز عبور:</label>
                 <div className="password-input-container">
@@ -307,7 +342,35 @@ const Register = () => {
                     {showPassword ? '👁️‍🗨️' : '🙈'}
                   </button>
                 </div>
-                {errors.password && (
+
+                {/* نوار قدرت رمز عبور */}
+                {formData.password && (
+                  <div className="password-strength-container">
+                    <div
+                      className="password-strength-bar"
+                      style={{
+                        width: `${strength.width}%`,
+                        backgroundColor: strength.color,
+                      }}
+                    ></div>
+                    <div className="password-strength-label" style={{ color: strength.color }}>
+                      {strength.label}
+                    </div>
+                  </div>
+                )}
+
+                {/* پیام راهنما */}
+                {formData.password && strength.label === 'ضعیف' && (
+                  <div className="password-hint error">
+                    رمز عبور خیلی ضعیف است. از ترکیب حروف بزرگ، کوچک، عدد و کاراکتر خاص استفاده کنید.
+                  </div>
+                )}
+                {formData.password && strength.label === 'متوسط' && (
+                  <div className="password-hint">
+                    رمز عبور متوسط است. رمز باید حاوی کاراکتر های بزرگ و کوچک،اعدادوکاراکتر های خاص مانند @$% باشد.
+                  </div>
+                )}
+                {errors.password && !strength.label && (
                   <div className="field-error">{errors.password}</div>
                 )}
               </div>

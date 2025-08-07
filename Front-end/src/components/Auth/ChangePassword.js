@@ -45,12 +45,8 @@ const ChangePassword = () => {
       strength = 100;
       label = 'بسیار قوی';
       color = '#28a745'; // سبز
-    } else if (passedChecks >= 4 && password.length >= 8) {
-      strength = 70;
-      label = 'قوی';
-      color = '#28a745';
     } else if (passedChecks >= 3) {
-      strength = 40;
+      strength = 50;
       label = 'متوسط';
       color = '#ffc107'; // زرد
     } else {
@@ -252,12 +248,7 @@ const ChangePassword = () => {
             )}
             {newPassword && strength.label === 'متوسط' && (
               <div className="password-hint">
-                رمز عبور متوسط است. برای قوی‌تر شدن، از کاراکترهای خاص و طول بیشتر استفاده کنید.
-              </div>
-            )}
-            {newPassword && strength.label === 'قوی' && (
-              <div className="password-hint">
-                عالی! یک کاراکتر خاص یا طول بیشتر برای "بسیار قوی" کافی است.
+                رمز عبور متوسط است. رمز باید حاوی کاراکتر های بزرگ و کوچک،اعدادوکاراکتر های خاص مانند @$% باشد.
               </div>
             )}
           </div>
