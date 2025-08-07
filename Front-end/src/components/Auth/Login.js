@@ -59,8 +59,8 @@ const Login = () => {
     
     if (!formData.password) {
       formErrors.password = 'رمز عبور الزامی است';
-    } else if (formData.password.length < 6) {
-      formErrors.password = 'رمز عبور باید حداقل 6 کاراکتر باشد';
+    } else if (formData.password.length < 8) {
+      formErrors.password = 'رمز عبور باید حداقل ۸ کاراکتر باشد و شامل حروف،اعداد و کاراکتر های خاص باشد';
     }
     
     if (Object.keys(formErrors).length > 0) {

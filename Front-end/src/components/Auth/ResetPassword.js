@@ -13,48 +13,115 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // مرحله 1: درخواست کد OTP برای ریست رمز
+  // تابع ارزیابی قدرت رمز عبور
+  const getPasswordStrength = (password) => {
+    if (password === '') return { label: '', width: 0, color: '' };
+
+    const checks = {
+      length: password.length >= 8,
+      lower: /[a-z]/.test(password),
+      upper: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
+
+    const passedChecks = Object.values(checks).filter(Boolean).length;
+
+    let strength = 0;
+    let label = '';
+    let color = '';
+
+    if (passedChecks === 5 && password.length >= 8) {
+      strength = 100;
+      label = 'بسیار قوی';
+      color = '#28a745'; // سبز تیره
+    } else if (passedChecks >= 3) {
+      strength = 60;
+      label = 'متوسط';
+      color = '#ffc107'; // زرد
+    } else {
+      strength = 20;
+      label = 'ضعیف';
+      color = '#dc3545'; // قرمز
+    }
+
+    return { label, width: strength, color };
+  };
+
+  const strength = getPasswordStrength(newPassword);
+
+  // فقط اگر رمز "بسیار قوی" باشد، فرم قابل ارسال است
+  const isPasswordValid = () => {
+    return (
+      newPassword.length >= 8 &&
+      confirmPassword === newPassword &&
+      strength.label === 'بسیار قوی'
+    );
+  };
+
+  // مرحله 1: درخواست کد OTP
   const requestResetOTP = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
-    
+
+    if (!email) {
+      setMessage('لطفاً ایمیل خود را وارد کنید');
+      setLoading(false);
+      return;
+    }
+
+    const emailRegex = /\S+@\S+\.\S+/;
+    if (!emailRegex.test(email)) {
+      setMessage('آدرس ایمیل نامعتبر است');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await api.post('/auth/request-reset-password-otp/', { email });
-      setMessage(response.data.msg);
+      const response = await api.post('/auth/request-reset-otp/', { email });
+      setMessage(response.data.msg || 'کد بازیابی به ایمیل شما ارسال شد');
       setStep('reset');
     } catch (error) {
-      const errorMsg = error.response?.data?.msg || 'خطا در ارسال کد بازیابی';
+      const errorMsg = error.response?.data?.msg || 'خطا در ارسال کد بازیابی. لطفاً دوباره تلاش کنید.';
       setMessage(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // مرحله 2: ریست رمز با کد OTP
+  // مرحله 2: تغییر رمز عبور
   const resetPassword = async (e) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      setMessage('رمزهای عبور یکسان نیستند');
-      return;
-    }
-    
     setLoading(true);
     setMessage('');
-    
+
+    // این چک فقط برای اطمینان اضافی است (هرچند دکمه غیرفعال است)
+    if (strength.label !== 'بسیار قوی') {
+      setMessage('رمز عبور باید بسیار قوی باشد');
+      setLoading(false);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setMessage('رمزهای عبور با هم مطابقت ندارند');
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await api.post('/auth/reset-password-with-otp/', { 
-        email, 
-        otp, 
-        new_password: newPassword 
+      const response = await api.post('/auth/reset-password/', {
+        email,
+        otp,
+        new_password: newPassword,
       });
-      setMessage(response.data.msg);
-      // بعد از موفقیت، به صفحه ورود برو
+      setMessage(response.data.msg || 'رمز عبور با موفقیت تغییر کرد');
+
       setTimeout(() => {
         navigate('/login');
       }, 2000);
     } catch (error) {
-      const errorMsg = error.response?.data?.msg || 'خطا در ریست رمز';
+      const errorMsg = error.response?.data?.msg || 'خطا در تغییر رمز عبور. لطفاً دوباره تلاش کنید.';
       setMessage(errorMsg);
     } finally {
       setLoading(false);
@@ -67,46 +134,42 @@ const ResetPassword = () => {
         {/* بخش ویژگی‌ها */}
         <div className="reset-password-features">
           <h2 className="reset-password-title">بازیابی رمز عبور</h2>
-          
+
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">📱</div>
               <h3>مدیریت چند پلتفرم</h3>
               <p>ارسال همزمان پست به کانال‌های تلگرام و بله</p>
             </div>
-            
             <div className="feature-card">
               <div className="feature-icon">⏱️</div>
               <h3>زمان‌بندی پست‌ها</h3>
               <p>زمان‌بندی ارسال پست‌ها در آینده</p>
             </div>
-            
             <div className="feature-card">
               <div className="feature-icon">📊</div>
               <h3>گزارش‌گیری</h3>
               <p>مشاهده وضعیت ارسال پست‌ها و آمار عملکرد</p>
             </div>
-            
             <div className="feature-card">
               <div className="feature-icon">🔒</div>
               <h3>امنیت بالا</h3>
               <p>حفاظت از اطلاعات شما با روش‌های امنیتی پیشرفته</p>
             </div>
           </div>
-        
         </div>
-        
-        {/* بخش فرم */}
+
+        {/* فرم */}
         <div className="reset-password-form-section">
           <div className="reset-password-form-wrapper">
             <h3 className="form-title">بازیابی رمز عبور</h3>
-            
+
             {message && (
-              <div className={`message ${message.includes('خطا') ? 'error' : 'success'}`}>
+              <div className={`message ${message.includes('خطا') || message.includes('مشکل') ? 'error' : 'success'}`}>
                 {message}
               </div>
             )}
-            
+
             {step === 'request' ? (
               <form onSubmit={requestResetOTP} className="reset-password-form">
                 <div className="form-group">
@@ -116,12 +179,13 @@ const ResetPassword = () => {
                     id="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="ایمیل خود را وارد کنید"
+                    placeholder="example@email.com"
                     required
                     disabled={loading}
+                    dir="ltr"
                   />
                 </div>
-                <button 
+                <button
                   type="submit"
                   disabled={loading}
                   className="reset-password-btn"
@@ -138,12 +202,14 @@ const ResetPassword = () => {
                     id="otp"
                     value={otp}
                     onChange={(e) => setOtp(e.target.value)}
-                    placeholder="کد 6 رقمی"
+                    placeholder="123456"
                     maxLength="6"
                     required
                     disabled={loading}
+                    dir="ltr"
                   />
                 </div>
+
                 <div className="form-group">
                   <label htmlFor="new-password">رمز عبور جدید:</label>
                   <input
@@ -151,11 +217,46 @@ const ResetPassword = () => {
                     id="new-password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="رمز عبور جدید"
+                    placeholder="رمز عبور بسیار قوی وارد کنید"
                     required
                     disabled={loading}
+                    dir="ltr"
                   />
+
+                  {/* نوار قدرت رمز عبور */}
+                  {newPassword && (
+                    <div className="password-strength-container">
+                      <div
+                        className="password-strength-bar"
+                        style={{
+                          width: `${strength.width}%`,
+                          backgroundColor: strength.color,
+                        }}
+                      ></div>
+                      <div className="password-strength-label" style={{ color: strength.color }}>
+                        {strength.label}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* پیام راهنما */}
+                  {newPassword && strength.label === 'ضعیف' && (
+                    <div className="password-hint error">
+                      رمز عبور خیلی ضعیف است. از ترکیب حروف بزرگ، کوچک، عدد و کاراکتر خاص استفاده کنید.
+                    </div>
+                  )}
+                  {newPassword && strength.label === 'متوسط' && (
+                    <div className="password-hint">
+                      رمز عبور متوسط است. برای قوی‌تر شدن، از کاراکترهای خاص و طول بیشتر استفاده کنید.
+                    </div>
+                  )}
+                  {newPassword && strength.label === 'قوی' && (
+                    <div className="password-hint">
+                      عالی! یک کاراکتر خاص یا طول بیشتر برای "بسیار قوی" کافی است.
+                    </div>
+                  )}
                 </div>
+
                 <div className="form-group">
                   <label htmlFor="confirm-password">تکرار رمز عبور:</label>
                   <input
@@ -166,27 +267,29 @@ const ResetPassword = () => {
                     placeholder="تکرار رمز عبور"
                     required
                     disabled={loading}
+                    dir="ltr"
                   />
                 </div>
-                <button 
+
+                <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !isPasswordValid()}
                   className="reset-password-btn"
                 >
                   {loading ? 'در حال تغییر...' : 'تغییر رمز عبور'}
                 </button>
-                <button 
-                  type="button" 
-                  onClick={() => setStep('request')}
+
+                <button
+                  type="button"
+                  onClick={requestResetOTP}
                   disabled={loading}
-                  className="reset-password-btn"
-                  style={{ background: loading ? '#ccc' : '#ff9800' }}
+                  className="reset-password-btn resend-btn"
                 >
                   ارسال مجدد کد
                 </button>
               </form>
             )}
-            
+
             {/* لینک‌های ناوبری */}
             <div className="auth-links">
               <p>
