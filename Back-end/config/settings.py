@@ -16,6 +16,9 @@ from datetime import timedelta
 import os
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+ADMINS = [
+    ('Ali Reza', 'alirezarazani3185@gmail.com'),
+]
 
 
 # Quick-start development settings - unsuitable for production
@@ -206,6 +209,10 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': 30.0,  #تست
         # 'schedule': crontab(hour=0, minute=0),
     },
+    'health-check': {
+    'task': 'core.tasks.health_check',
+    'schedule': 31.0,  # هر 10 دقیقه
+    },
 }
 CELERY_TIMEZONE = 'Asia/Tehran'
 
@@ -222,6 +229,11 @@ LOGS_DIR.mkdir(exist_ok=True)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'filters': {
+    'context': {
+        '()': 'core.logging_filters.ContextFilter',
+        },
+    },
     'formatters': {
         'verbose': {
             'format': '[{asctime}] [{levelname}] {name}::{module}.{funcName}::{message}',
@@ -240,6 +252,7 @@ LOGGING = {
             'maxBytes': 1024 * 1024 * 10,  # 10 MB
             'backupCount': 7,
             'formatter': 'verbose',
+            'filters': ['context'],
         },
         'file_error': {
             'level': 'ERROR',

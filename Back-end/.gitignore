@@ -5,3 +5,4 @@ test.py
 media
 *celerybeat*
 logs
+__pycache__
