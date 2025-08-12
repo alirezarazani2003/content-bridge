@@ -145,12 +145,29 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 REST_FRAMEWORK = {
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AdminRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '10/minute',
+        'user': '100/minute',
+        'admin': '1000/minute',
+        'otp_request': '5/minute',
+    },
+    'DEFAULT_THROTTLE_CLASSES': [
+        'config.throttles.RequestOTPThrottle',
+    ],
+
+
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'auth_app.authentication.CookieJWTAuthentication',
     ),
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 10
 }
+
 
 
 SIMPLE_JWT = {
