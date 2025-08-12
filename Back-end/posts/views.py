@@ -17,6 +17,7 @@ import os
 import logging
 import uuid
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
+from config.throttles import RoleBasedRateThrottle
 
 logger = logging.getLogger('posts.activity')
 security_logger = logging.getLogger('posts.security')
@@ -35,6 +36,8 @@ class PostCreateView(generics.CreateAPIView):
     queryset = Post.objects.all()
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
 
     @swagger_auto_schema(
         operation_summary="ارسال پست (فوری یا زمان‌بندی‌شده)",
@@ -77,7 +80,9 @@ class PostListView(generics.ListAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
     pagination_class = PostPagination
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
+    
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Post.objects.none()
@@ -109,7 +114,9 @@ class PostListView(generics.ListAPIView):
 class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
+    
     def get_queryset(self):
         if getattr(self, 'swagger_fake_view', False):
             return Post.objects.none()
@@ -171,7 +178,8 @@ class PostDetailView(generics.RetrieveUpdateDestroyAPIView):
 
 class ProtectedMediaView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="دریافت امن فایل رسانه‌ای",
         operation_description="دریافت فایل رسانه‌ای فقط توسط صاحب پست یا ادمین",
@@ -229,7 +237,8 @@ class ProtectedMediaView(APIView):
 
 class CancelScheduledPostView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="لغو پست زمان‌بندی‌شده",
         operation_description="این API به شما اجازه می‌دهد پست‌هایی که هنوز ارسال نشده‌اند (و زمان‌بندی‌شده‌اند) را لغو کنید.",
@@ -271,7 +280,8 @@ class CancelScheduledPostView(APIView):
 
 class RetryPostView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="ارسال مجدد پست ناموفق",
         operation_description="این API پست ناموفق را دوباره به صف ارسال می‌افزاید",
@@ -313,7 +323,8 @@ class RetryPostView(APIView):
 class UserMediaViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, IsEmailVerified]
     serializer_class = UserMediaSerializer
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     def get_queryset(self):
         return UserMediaFile.objects.filter(user=self.request.user, is_active=True)
 

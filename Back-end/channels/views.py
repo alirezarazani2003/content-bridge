@@ -11,6 +11,7 @@ from rest_framework import generics
 import logging
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
 import uuid
+from config.throttles import RoleBasedRateThrottle
 
 logger = logging.getLogger('channels.activity')
 security_logger = logging.getLogger('channels.security')
@@ -31,6 +32,8 @@ class IsOwner(permissions.BasePermission):
 
 
 class ChannelCreateView(generics.CreateAPIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     queryset = Channel.objects.all().order_by('id')
     serializer_class = ChannelSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified]
@@ -88,6 +91,8 @@ class ChannelCreateView(generics.CreateAPIView):
 
 
 class ChannelListView(generics.ListAPIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     serializer_class = ChannelSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = Channel.objects.all().order_by('-id')
@@ -112,6 +117,9 @@ class ChannelListView(generics.ListAPIView):
 
 
 class ChannelDetailView(generics.RetrieveUpdateDestroyAPIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
+
     queryset = Channel.objects.all()
     serializer_class = ChannelSerializer
     permission_classes = [permissions.IsAuthenticated, IsEmailVerified, IsOwner]

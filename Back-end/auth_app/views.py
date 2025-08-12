@@ -18,6 +18,7 @@ from config.throttles import RequestOTPThrottle
 import logging
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
 import uuid
+from config.throttles import RoleBasedRateThrottle
 
 logger = logging.getLogger('auth_app.activity')
 security_logger = logging.getLogger('auth_app.security')
@@ -31,7 +32,8 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 class MeView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated, IsEmailVerified]
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     permission_classes = [IsAuthenticated, IsEmailVerified]
     serializer_class = UserSerializer
 
@@ -56,7 +58,6 @@ class MeView(generics.RetrieveAPIView):
 
 class ProtectedDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsEmailVerified]
-    permission_classes = [IsAuthenticated, IsEmailVerified]
 
     def get(self, request: Any) -> Response:
         logger.info(f"User {request.user.id} accessed dashboard from IP={get_client_ip(request)}")
@@ -68,7 +69,6 @@ class ProtectedDashboardView(APIView):
 
 class RequestOTPView(APIView):
     throttle_classes = [RequestOTPThrottle]
-
     @swagger_auto_schema(
         request_body=RequestOTPSerializer,
         responses={200: openapi.Response(
@@ -114,6 +114,8 @@ class RequestOTPView(APIView):
 
 
 class VerifyOTPView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'anon'
     @swagger_auto_schema(
         request_body=VerifyOTPSerializer,
         responses={200: openapi.Response(description="ایمیل وریفای شد")},
@@ -167,6 +169,7 @@ class VerifyOTPView(APIView):
 
 
 class RequestLoginOTPView(APIView):
+    throttle_classes = [RequestOTPThrottle]
     @swagger_auto_schema(
         request_body=RequestOTPSerializer,
         responses={
@@ -216,6 +219,9 @@ class RequestLoginOTPView(APIView):
 
 
 class LoginWithOTPView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'anon'
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -305,6 +311,7 @@ class LoginWithOTPView(APIView):
 
 
 class RequestResetPasswordOTPView(APIView):
+    throttle_classes = [RequestOTPThrottle]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -354,6 +361,7 @@ class RequestResetPasswordOTPView(APIView):
 
 
 class ResetPasswordWithOTPView(APIView):
+    throttle_classes = [RequestOTPThrottle]
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -414,7 +422,8 @@ class ResetPasswordWithOTPView(APIView):
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -459,8 +468,9 @@ class ChangePasswordView(APIView):
 
 
 class LogoutView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
     permission_classes = [IsAuthenticated]
-
+    throttle_scope = 'user'
     @swagger_auto_schema(
         request_body=None,
         responses={
@@ -497,6 +507,9 @@ class LogoutView(APIView):
 
 
 class CookieTokenRefreshView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
+
     @swagger_auto_schema(
         operation_summary="تجدید توکن دسترسی با استفاده از توکن رفرش کوکی",
         operation_description="توکن رفرش را از کوکی دریافت می‌کند و در صورت معتبر بودن توکن جدید دسترسی (Access Token) را صادر می‌کند و در کوکی ذخیره می‌کند.",

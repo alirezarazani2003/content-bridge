@@ -12,6 +12,7 @@ from django.contrib.auth.hashers import check_password
 import logging
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
 import uuid
+from config.throttles import RoleBasedRateThrottle
 
 logger = logging.getLogger('users.activity')
 security_logger = logging.getLogger('users.security')
@@ -27,6 +28,8 @@ def get_client_ip(request):
 
 
 class RegisterView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'anon'
     @swagger_auto_schema(
         request_body=RegisterSerializer,
         responses={
@@ -60,6 +63,9 @@ class RegisterView(APIView):
 
 
 class LoginView(APIView):
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'anon'
+
     @swagger_auto_schema(
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,

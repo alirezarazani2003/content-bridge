@@ -11,6 +11,7 @@ from .models import ChatSession, ChatMessage
 from .serializers import ChatSessionSerializer, ChatMessageSerializer, ChatRequestSerializer
 import logging
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
+from config.throttles import RoleBasedRateThrottle
 
 logger = logging.getLogger('chat.activity')
 error_logger = logging.getLogger('chat.errors')
@@ -26,7 +27,8 @@ def get_client_ip(request):
 
 class ChatSessionListCreateView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="📜 دریافت لیست سشن‌های چت",
         operation_description="لیست تمام سشن‌های چت کاربر فعلی را برمی‌گرداند.",
@@ -89,7 +91,8 @@ class ChatSessionListCreateView(APIView):
 
 class ChatSessionDetailView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="📄 دریافت جزئیات یک سشن چت",
         operation_description="جزئیات یک سشن چت خاص را برمی‌گرداند.",
@@ -167,7 +170,8 @@ class ChatSessionDetailView(APIView):
 
 class SessionMessagesView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="💬 دریافت پیام‌های یک سشن چت",
         operation_description="تمام پیام‌های یک سشن چت خاص را برمی‌گرداند.",
@@ -242,7 +246,8 @@ chat_response_schema = openapi.Schema(
 
 class ChatMessageView(APIView):
     permission_classes = [IsAuthenticated]
-
+    throttle_classes = [RoleBasedRateThrottle]
+    throttle_scope = 'user'
     @swagger_auto_schema(
         operation_summary="🤖 چت با هوش مصنوعی",
         operation_description="ارسال پیام به هوش مصنوعی و دریافت پاسخ آن. اگر session_id ارسال نشود، یک سشن جدید ایجاد خواهد شد.",
