@@ -1,4 +1,3 @@
-# channels/views.py
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.utils.translation import gettext_lazy as _

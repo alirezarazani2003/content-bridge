@@ -152,8 +152,8 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'anon': '10/minute',
-        'user': '100/minute',
-        'admin': '1000/minute',
+        'user': '10/minute',
+        'admin': '10/minute',
         'otp_request': '5/minute',
     },
     'DEFAULT_THROTTLE_CLASSES': [
@@ -226,11 +226,11 @@ HEALTH_CHECK_INTERVAL = config('CELERY_TASK_HEALTH_CHECK_INTERVAL',cast=float)
 CELERY_BEAT_SCHEDULE = {
     'daily-log-report': {
         'task': 'core.tasks.daily_log_report',
-        'schedule': crontab(hour=21, minute=42),
+        'schedule': crontab(hour=DAILY_REPORT_HOUR, minute=DAILY_REPORT_MINUTE),
     },
     'health-check': {
     'task': 'core.tasks.health_check',
-    'schedule': 600.0,
+    'schedule': HEALTH_CHECK_INTERVAL,
     },
 }
 CELERY_TIMEZONE = 'Asia/Tehran'

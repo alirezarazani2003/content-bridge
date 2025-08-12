@@ -1,9 +1,8 @@
 from django.db import models
 from django.utils import timezone
 from decouple import config
-from django.core.validators import RegexValidator
 import secrets
-from core.validator import otp_validator, email_validator
+from core.validator import otp_validator
 
 
 class OTPPurpose(models.TextChoices):
@@ -13,10 +12,10 @@ class OTPPurpose(models.TextChoices):
 
 
 class EmailOTP(models.Model):
-    email = models.EmailField(db_index=True,validators=[email_validator])
+    email = models.EmailField(db_index=True)
     otp = models.CharField(
         max_length=6,
-        validators=[RegexValidator(r'^\d{6}$')]
+        validators=[otp_validator]
     )
     purpose = models.CharField(max_length=10, choices=OTPPurpose.choices)
     created_at = models.DateTimeField(default=timezone.now)
