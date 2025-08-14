@@ -215,7 +215,6 @@ class SessionMessagesView(APIView):
             }, status=status.HTTP_404_NOT_FOUND)
 
 
-# Schemaهای Swagger
 chat_request_schema = openapi.Schema(
     type=openapi.TYPE_OBJECT,
     required=['message'],
