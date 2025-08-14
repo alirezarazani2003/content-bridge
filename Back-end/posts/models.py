@@ -34,7 +34,6 @@ class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='posts')
     channels = models.ManyToManyField(Channel, related_name='posts')
     content = models.TextField(blank=True, null=True)
-    media_files = models.JSONField(blank=True, null=True)
     scheduled_time = models.DateTimeField(blank=True, null=True) 
     status = models.CharField(max_length=10, choices=POST_STATUS_CHOICES, default='pending')
     error_message = models.TextField(blank=True, null=True)
