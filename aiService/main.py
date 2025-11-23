@@ -14,7 +14,7 @@ if not OPENROUTER_API_KEY:
 
 
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL_NAME = "x-ai/grok-4.1-fast"
+MODEL_NAME = os.getenv("MODEL_NAME")
 
 
 class Message(BaseModel):
@@ -61,10 +61,8 @@ async def chat_with_ai(request: ChatRequest):
                 "model": MODEL_NAME,
                 "messages": messages
             },
-            timeout=60,
-            proxies={"http": None, "https": None}
-        )
-
+            timeout=120
+)
         if response.status_code != 200:
             try:
                 error_msg = response.json().get("error", {}).get("message", response.text)
