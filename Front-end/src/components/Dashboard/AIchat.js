@@ -16,8 +16,9 @@ const AIChat = () => {
   const [savedPrompts, setSavedPrompts] = useState([]);
   const [promptForm, setPromptForm] = useState({ id: null, title: '', content: '' });
   const [modalError, setModalError] = useState('');
+  const [expandedPromptId, setExpandedPromptId] = useState(null);
   const messagesEndRef = useRef(null);
-const [expandedPromptId, setExpandedPromptId] = useState(null);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -118,7 +119,15 @@ const [expandedPromptId, setExpandedPromptId] = useState(null);
 
       setMessages((prev) => [...prev, botMessage]);
 
-      // به‌روزرسانی لیست سشن‌ها برای نمایش درست ترتیب
+      // 🔥 ذخیره session_id در currentSession اگر چت جدید باشد
+      if (!currentSession) {
+        setCurrentSession({
+          id: response.data.data.session_id,
+          title: 'چت جدید', // در fetchSessions بعداً عنوان واقعی بارگذاری می‌شود
+        });
+      }
+
+      // به‌روزرسانی لیست سشن‌ها
       fetchSessions();
     } catch (err) {
       console.error('Error sending message:', err);
@@ -345,126 +354,126 @@ const [expandedPromptId, setExpandedPromptId] = useState(null);
 
       {/* پاپ‌آپ مدیریت پرامپت */}
       {showPromptsModal && (
-  <div className="prompt-modal-overlay" onClick={() => setShowPromptsModal(false)}>
-    <div className="prompt-modal-content" onClick={(e) => e.stopPropagation()}>
-      <div className="prompt-modal-header">
-        <h3>📝 پرامپت‌های ذخیره‌شده</h3>
-        <button
-          onClick={() => setShowPromptsModal(false)}
-          className="prompt-modal-close"
-        >
-          ×
-        </button>
-      </div>
-
-      {/* فرم افزودن/ویرایش */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!promptForm.title || !promptForm.content.trim()) {
-            setModalError('عنوان و متن پرامپت الزامی است');
-            return;
-          }
-          if (promptForm.id) {
-            updatePrompt(promptForm);
-          } else {
-            createPrompt(promptForm);
-          }
-          setPromptForm({ id: null, title: '', content: '' });
-          setModalError('');
-        }}
-        className="prompt-form-modal"
-      >
-        {modalError && <div className="prompt-error">{modalError}</div>}
-        <input
-          type="text"
-          placeholder="عنوان پرامپت"
-          value={promptForm.title}
-          onChange={(e) => setPromptForm({ ...promptForm, title: e.target.value })}
-          className="prompt-input"
-        />
-        <textarea
-          placeholder="متن پرامپت..."
-          value={promptForm.content}
-          onChange={(e) => setPromptForm({ ...promptForm, content: e.target.value })}
-          className="prompt-textarea"
-          rows="3"
-        />
-        <button type="submit" className="prompt-submit-btn">
-          {promptForm.id ? '✅ ویرایش' : '➕ افزودن'}
-        </button>
-      </form>
-
-      {/* لیست پرامپت‌ها */}
-      <div className="saved-prompts-list-accordion">
-        {savedPrompts.length === 0 ? (
-          <p className="no-prompts">هیچ پرامپتی ذخیره نشده</p>
-        ) : (
-          savedPrompts.map((p) => (
-            <div key={p.id} className="prompt-accordion-item">
-              {/* هدر: عنوان */}
-              <div
-                className="prompt-accordion-header"
-                onClick={() => {
-                  if (expandedPromptId === p.id) {
-                    setExpandedPromptId(null);
-                  } else {
-                    setExpandedPromptId(p.id);
-                  }
-                }}
+        <div className="prompt-modal-overlay" onClick={() => setShowPromptsModal(false)}>
+          <div className="prompt-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="prompt-modal-header">
+              <h3>📝 پرامپت‌های ذخیره‌شده</h3>
+              <button
+                onClick={() => setShowPromptsModal(false)}
+                className="prompt-modal-close"
               >
-                <span className="prompt-title">{p.title}</span>
-                <span className="prompt-toggle-icon">
-                  {expandedPromptId === p.id ? '−' : '+'}
-                </span>
-              </div>
-
-              {/* بدنه: محتوا (با انیمیشن) */}
-              <div
-                className={`prompt-accordion-body ${expandedPromptId === p.id ? 'expanded' : ''}`}
-              >
-                <div className="prompt-content-scrollable">
-                  <pre>{p.content}</pre>
-                </div>
-                <div className="prompt-actions-sticky">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInputMessage(p.content);
-                      setShowPromptsModal(false);
-                    }}
-                    className="prompt-use-btn"
-                  >
-                    📥 استفاده
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setPromptForm(p);
-                      setExpandedPromptId(null);
-                    }}
-                    className="prompt-edit-btn"
-                  >
-                    ✏️ ویرایش
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deletePrompt(p.id);
-                    }}
-                    className="prompt-delete-btn"
-                  >
-                    🗑 حذف
-                  </button>
-                </div>
-              </div>
+                ×
+              </button>
             </div>
-          ))
-        )}
-      </div>
-    </div>
-  </div>
-)}
+
+            {/* فرم افزودن/ویرایش */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (!promptForm.title || !promptForm.content.trim()) {
+                  setModalError('عنوان و متن پرامپت الزامی است');
+                  return;
+                }
+                if (promptForm.id) {
+                  updatePrompt(promptForm);
+                } else {
+                  createPrompt(promptForm);
+                }
+                setPromptForm({ id: null, title: '', content: '' });
+                setModalError('');
+              }}
+              className="prompt-form-modal"
+            >
+              {modalError && <div className="prompt-error">{modalError}</div>}
+              <input
+                type="text"
+                placeholder="عنوان پرامپت"
+                value={promptForm.title}
+                onChange={(e) => setPromptForm({ ...promptForm, title: e.target.value })}
+                className="prompt-input"
+              />
+              <textarea
+                placeholder="متن پرامپت..."
+                value={promptForm.content}
+                onChange={(e) => setPromptForm({ ...promptForm, content: e.target.value })}
+                className="prompt-textarea"
+                rows="3"
+              />
+              <button type="submit" className="prompt-submit-btn">
+                {promptForm.id ? '✅ ویرایش' : '➕ افزودن'}
+              </button>
+            </form>
+
+            {/* لیست پرامپت‌ها */}
+            <div className="saved-prompts-list-accordion">
+              {savedPrompts.length === 0 ? (
+                <p className="no-prompts">هیچ پرامپتی ذخیره نشده</p>
+              ) : (
+                savedPrompts.map((p) => (
+                  <div key={p.id} className="prompt-accordion-item">
+                    {/* هدر: عنوان */}
+                    <div
+                      className="prompt-accordion-header"
+                      onClick={() => {
+                        if (expandedPromptId === p.id) {
+                          setExpandedPromptId(null);
+                        } else {
+                          setExpandedPromptId(p.id);
+                        }
+                      }}
+                    >
+                      <span className="prompt-title">{p.title}</span>
+                      <span className="prompt-toggle-icon">
+                        {expandedPromptId === p.id ? '−' : '+'}
+                      </span>
+                    </div>
+
+                    {/* بدنه: محتوا */}
+                    <div
+                      className={`prompt-accordion-body ${expandedPromptId === p.id ? 'expanded' : ''}`}
+                    >
+                      <div className="prompt-content-scrollable">
+                        <pre>{p.content}</pre>
+                      </div>
+                      <div className="prompt-actions-sticky">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInputMessage(p.content);
+                            setShowPromptsModal(false);
+                          }}
+                          className="prompt-use-btn"
+                        >
+                          📥 استفاده
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPromptForm(p);
+                            setExpandedPromptId(null);
+                          }}
+                          className="prompt-edit-btn"
+                        >
+                          ✏️ ویرایش
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deletePrompt(p.id);
+                          }}
+                          className="prompt-delete-btn"
+                        >
+                          🗑 حذف
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

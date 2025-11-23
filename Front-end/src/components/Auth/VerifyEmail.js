@@ -58,7 +58,7 @@ const VerifyEmail = () => {
     try {
       const response = await api.post(
         '/auth/verify-otp/',
-        { email, otp, purpose: 'verify' },
+        { email, otp },
         { withCredentials: true }
       );
 
