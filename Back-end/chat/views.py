@@ -12,6 +12,9 @@ from .serializers import ChatSessionSerializer, ChatMessageSerializer, ChatReque
 import logging
 from core.logging_filters import set_user_id, set_request_id, set_client_ip
 from config.throttles import RoleBasedRateThrottle
+from django.core.cache import cache
+import hashlib
+import time
 logger = logging.getLogger('chat.activity')
 error_logger = logging.getLogger('chat.errors')
 security_logger = logging.getLogger('chat.security')
@@ -265,7 +268,12 @@ class ChatMessageView(APIView):
             500: openapi.Response('AI Service Error')
         }
     )
+#222
     def post(self, request):
+        import time
+        import hashlib
+        from django.core.cache import cache
+
         request_id = str(uuid.uuid4())[:8]
         client_ip = get_client_ip(request)
         set_request_id(request_id)
@@ -273,9 +281,9 @@ class ChatMessageView(APIView):
         set_user_id(request.user.id)
 
         logger.info(f"User {request.user.id} sending message to AI from IP={client_ip}")
+
         serializer = ChatRequestSerializer(data=request.data)
         if not serializer.is_valid():
-            security_logger.warning(f"Invalid chat message data from user {request.user.id}: {serializer.errors}")
             return Response({
                 'success': False,
                 'message': 'اطلاعات نامعتبر است',
@@ -284,51 +292,71 @@ class ChatMessageView(APIView):
 
         message = serializer.validated_data['message'].strip()
         if not message:
-            return Response({
-                'success': False,
-                'message': 'متن پیام نمی‌تواند خالی باشد'
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success': False, 'message': 'پیام نمی‌تواند خالی باشد'}, status=400)
 
         session_id = serializer.validated_data.get('session_id')
 
-        if session_id:
-            try:
-                session_uuid = uuid.UUID(str(session_id))
-                session = ChatSession.objects.get(pk=session_uuid, user=request.user)
-            except (ValueError, uuid.UUIDError, ChatSession.DoesNotExist):
-                try:
-                    session = ChatSession.objects.get(pk=session_id, user=request.user)
-                except (ValueError, ChatSession.DoesNotExist):
-                    security_logger.warning(f"User {request.user.id} tried to access invalid session ID: {session_id}")
-                    return Response({
-                        'success': False,
-                        'message': 'سشن چت یافت نشد'
-                    }, status=status.HTTP_404_NOT_FOUND)
-            logger.info(f"User {request.user.id} using existing session {session.id}")
-        else:
-            session_title = self.generate_title(message)
-            session = ChatSession.objects.create(
-                user=request.user,
-                title=session_title
-            )
-            logger.info(f"User {request.user.id} created new session {session.id} for chat")
+        # کلید منحصر به فرد برای این پیام دقیق
+        dedup_key = f"chat_lock_v3_{request.user.id}_{session_id or 'new'}_{hashlib.md5(message.encode()).hexdigest()}"
+        result_key = dedup_key + "_result"
 
-        user_message = ChatMessage.objects.create(
-            session=session,
-            role='user',
-            content=message
-        )
+        # قفل اتمیک — فقط یکی می‌تونه وارد بشه
+        lock_acquired = cache.add(dedup_key, "locked", timeout=600)  # ۱۰ دقیقه
+
+        if not lock_acquired:
+            # یکی دیگه قبلاً قفل رو گرفته — صبر کن تا تموم کنه
+            logger.info(f"Duplicate request blocked (atomic lock) - user {request.user.id}")
+
+            for _ in range(120):  # حداکثر ۲ دقیقه صبر کن
+                time.sleep(1)
+                result = cache.get(result_key)
+                if result:
+                    return Response(result)
+            
+            # اگر هنوز آماده نبود
+            return Response({
+                'success': True,
+                'data': {
+                    'ai_message': {'content': 'در حال پردازش پیام طولانی...\nلطفاً صبر کنید و صفحه را رفرش نکنید.'}
+                },
+                'message': 'در حال پردازش...'
+            }, status=200)
+
+        # فقط این درخواست اجازه داره ادامه بده
         try:
+            # ایجاد یا دریافت سشن
+            if session_id:
+                try:
+                    session = ChatSession.objects.get(id=session_id, user=request.user)
+                except ChatSession.DoesNotExist:
+                    cache.delete(dedup_key)
+                    return Response({'success': False, 'message': 'سشن یافت نشد'}, status=404)
+                logger.info(f"Using existing session {session.id}")
+            else:
+                session_title = self.generate_title(message)
+                session = ChatSession.objects.create(user=request.user, title=session_title)
+                logger.info(f"Created new session {session.id}")
+
+            # ذخیره پیام کاربر
+            user_message = ChatMessage.objects.create(
+                session=session,
+                role='user',
+                content=message
+            )
+
+            # دریافت پاسخ از هوش مصنوعی
             ai_response = self.get_ai_response(message, session)
             ai_message = ChatMessage.objects.create(
                 session=session,
                 role='assistant',
                 content=ai_response
             )
-            logger.info(f"AI responded successfully to user {request.user.id} in session {session.id}")
+
+            logger.info(f"AI responded successfully in session {session.id}")
             session.save(update_fields=['updated_at'])
 
-            return Response({
+            # پاسخ نهایی
+            response_data = {
                 'success': True,
                 'data': {
                     'session_id': str(session.id),
@@ -336,14 +364,23 @@ class ChatMessageView(APIView):
                     'ai_message': ChatMessageSerializer(ai_message).data
                 },
                 'message': 'پاسخ هوش مصنوعی با موفقیت دریافت شد'
-            })
+            }
+
+            # ذخیره نتیجه برای درخواست‌های بعدی
+            cache.set(result_key, response_data, timeout=600)
+            cache.delete(dedup_key)  # قفل رو بردار
+
+            return Response(response_data)
+
         except Exception as e:
-            error_logger.error(f"Failed to get AI response for user {request.user.id} in session {session.id}: {e}")
+            error_logger.error(f"AI error for user {request.user.id}: {e}")
+            cache.delete(dedup_key)
+            cache.delete(result_key)
             return Response({
                 'success': False,
-                'message': f'خطا در ارتباط با سرویس هوش مصنوعی: {str(e)}'
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+                'message': 'خطا در دریافت پاسخ از هوش مصنوعی'
+            }, status=500)
+#222222222
     def generate_title(self, message):
 
         prompt = (
