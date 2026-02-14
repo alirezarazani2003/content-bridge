@@ -15,7 +15,7 @@ Built for digital teams, marketers, and community managers, Content Bridge strea
 
 Content Bridge is a modern, containerized application built with:
 
-- **Frontend**: React + Vite (TypeScript-ready, no Tailwind — pure CSS)
+- **Frontend**: React(JavaScript-ready, no Tailwind — pure CSS)
 - **Backend**: Django REST Framework (Python) with JWT authentication
 - **AI Service**: FastAPI for lightweight, async AI inference
 - **Database**: PostgreSQL (production-grade relational storage)
